@@ -247,7 +247,7 @@ export const getIntermediateData = async (req, res) => {
       params.push(...municipiosRemetenteArray);
     }
 
-    if (estadosDestinatario.length > 0) {
+    if (estadosDestinatarioArray.length > 0) {
       query += ` AND es_destinatario.id IN (${estadosDestinatarioArray
         .map(() => '?')
         .join(',')})`;
@@ -413,14 +413,14 @@ export const getAdvancedData = async (req, res) => {
       params.push(...municipiosRemetenteArray);
     }
 
-    if (estadosDestinatario.length > 0) {
+    if (estadosDestinatarioArray.length > 0) {
       query += ` AND es_destinatario.id IN (${estadosDestinatarioArray
         .map(() => '?')
         .join(',')})`;
       params.push(...estadosDestinatarioArray);
     }
 
-    if (ccsemasRemetente.length > 0) {
+    if (ccsemasRemetenteArray.length > 0) {
       query += ` AND e_remetente.ccsema IN (${ccsemasRemetenteArray
         .map(() => '?')
         .join(',')})`;
