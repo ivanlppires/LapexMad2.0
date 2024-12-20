@@ -1,0 +1,61 @@
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Dependências
+node_modules/
+bower_components/
+
+# Build
+dist/
+build/
+
+# Arquivos do Editor
+*.swp
+*.swo
+*.swn
+*.tmp
+*.bak
+*.orig
+*.sav
+
+# IDEs
+.idea/
+.vscode/
+*.code-workspace
+
+# Sistemas de Controle
+*.lock
+*.pyc
+*.pyo
+*.class
+*.jar
+*.war
+*.keystore
+
+# Arquivos do Sistema
+*.env
+.env.*
+*.config
+*.json.local
+
+# Outros
+coverage/
+*.iml
+*.out
+*.exe
+*.dll
+*.pdb
+<<<<<<< HEAD
+=======
+
+# Config files
+serviceAccountKey.json
+consultas_lapexmad_2.txt
+*.sql
+>>>>>>> e0cc22a (Em desenvolvimento)
