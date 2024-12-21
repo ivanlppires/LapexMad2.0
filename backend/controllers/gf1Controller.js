@@ -1,179 +1,133 @@
-import db from "../config/db.js";
+import { select, from, where, group, limit, order, execute } from "../utils/query.js";
 
 // Controlador para consulta básica - totais por ano e especies
+
 export const getBasicData = async (req, res) => {
-  
-  const { anos, especies } = req.query;
   try {
-    let sql = `SELECT `;
-    if (anos) sql += `year(data_emissao) as ano, `;
-    if (especies) sql += `especie_popular_cientifico_id, `;
-    sql += ` sum(volume) as volumetotal, sum(valor_total) as valortotal FROM gf1 WHERE 1`;
+    const { anos, especies } = req.query;
 
-    if (anos) {
-      sql += ` AND (`;
-      anos.forEach((ano, index) => {
-        sql += ` year(data_emissao) = ${ano}`;
-        if (index < anos.length - 1) sql += ` OR`;
-      });
-      sql += `)`;
-    }
+    const columns = [
+      ...(anos ? ["year(data_emissao) as ano"] : []),
+      ...(especies ? ["especie_popular_cientifico_id"] : []),
+      "sum(volume) as volumetotal",
+      "sum(valor_total) as valortotal"
+    ];
 
-    if (especies) {
-      sql += ` AND (`;
-      especies.forEach((especie, index) => {
-        sql += ` especie_popular_cientifico_id = ${especie}`;
-        if (index < especies.length - 1) sql += ` OR`;
-      });
-      sql += `)`;
-    }
+    let sql = select(columns) + from("gf1");
 
     if (anos || especies) {
-      sql += ` GROUP BY `;
-      if (anos) sql += `year(emissao), `;
-      if (especies) sql += `especie_popular_cientifico_id, `;
-      sql = sql.slice(0, -2);
+      const conditions = [];
+      if (anos) conditions.push({ "year(data_emissao)": anos });
+      if (especies) conditions.push({ "especie_popular_cientifico_id": especies });
+
+      sql += where(conditions);
+      sql += group(["year(data_emissao)", "especie_popular_cientifico_id"]);
     }
-    sql += `;`;
-    const [rows] = await db.query(sql);
-    res.json(rows[0]);
+
+    const data = await execute(sql);
+    res.json(data);
   } catch (error) {
-    console.error("Erro na consulta básica:", error);
-    res.status(500).json({ message: "Erro no servidor" });
+    console.error("Error fetching data:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
+
 // Controlador para consulta intermediária - busca por municipios
 export const getIntermediateData = async (req, res) => {
-  const { anos, especies, municipios_destinatarios } = req.query;
   try {
-    let sql = `SELECT `;
-    if (anos) sql += `year(data_emissao) as ano, `;
-    if (especies) sql += `especie_popular_cientifico_id, `;
-    if (municipios_destinatarios)
-      sql += `empreendimento_destinatario.municipio_id, `;
-    sql += ` sum(volume) as volumetotal, sum(valor_total) as valortotal FROM gf1 `;
+    const { anos, especies, municipios_destinatarios } = req.query;
+
+    const columns = [
+      ...(anos ? ["year(data_emissao) as ano"] : []),
+      ...(especies ? ["especie_popular_cientifico_id"] : []),
+      ...(municipios_destinatarios ? ["empreendimento.municipio_id"] : []),
+      "sum(volume) as volumetotal",
+      "sum(valor_total) as valortotal"
+    ];
+
+    let sql = select(columns) + from("gf1");
 
     if (municipios_destinatarios) {
-      sql += `JOIN empreendimento ON (destinatario_id = empreendimento.id AND (`;
-      municipios_destinatarios.forEach((municipio, index) => {
-        sql += ` municipio_id = ${municipio}`;
-        if (index < municipios_destinatarios.length - 1) sql += ` OR`;
-      });
-      sql += `)) `;
+      sql += ` JOIN empreendimento ON (gf1.destinatario_id = empreendimento.id)`;
+      sql += where(
+        municipios_destinatarios.map((municipio) => ({ "empreendimento.municipio_id": municipio }))
+      );
     }
 
-    sql += `WHERE 1`;
-    if (anos) {
-      sql += ` AND (`;
-      anos.forEach((ano, index) => {
-        sql += ` year(data_emissao) = ${ano}`;
-        if (index < anos.length - 1) sql += ` OR`;
-      });
-      sql += `)`;
+    const conditions = [];
+    if (anos) conditions.push({ "year(data_emissao)": anos });
+    if (especies) conditions.push({ "especie_popular_cientifico_id": especies });
+
+    if (conditions.length) sql += where(conditions);
+
+    if (anos || especies || municipios_destinatarios) {
+      const groupByColumns = [
+        ...(anos ? ["year(data_emissao)"] : []),
+        ...(especies ? ["especie_popular_cientifico_id"] : []),
+        ...(municipios_destinatarios ? ["empreendimento.municipio_id"] : [])
+      ];
+      sql += group(groupByColumns);
     }
 
-    if (especies) {
-      sql += ` AND (`;
-      especies.forEach((especie, index) => {
-        sql += ` especie_popular_cientifico_id = ${especie}`;
-        if (index < especies.length - 1) sql += ` OR`;
-      });
-      sql += `)`;
-    }
-
-    if (anos || especies) {
-      sql += ` GROUP BY `;
-      if (anos) sql += `year(emissao), `;
-      if (especies) sql += `especie_popular_cientifico_id, `;
-      if (municipios_destinatarios)
-        sql += `empreendimento_destinatario.municipio_id, `;
-      sql = sql.slice(0, -2);
-    }
-    sql += `;`;
-    const [rows] = await db.query(sql);
-    res.json(rows[0]);
+    const data = await execute(sql);
+    res.json(data);
   } catch (error) {
-    console.error("Erro na consulta básica:", error);
-    res.status(500).json({ message: "Erro no servidor" });
+    console.error("Error fetching intermediate data:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
 // Controlador para consulta avançada - Busca por  ccsemas e lotes
 export const getAdvancedData = async (req, res) => {
-  const { anos, especies, municipios_destinatarios, ccsemas, lotes } =
-    req.query;
   try {
-    let sql = `SELECT `;
+    const { anos, especies, municipios_destinatarios, ccsemas, lotes } = req.query;
 
-    if (anos) sql += `year(data_emissao) as ano, `;
-    if (especies) sql += `especie_popular_cientifico_id, `;
-    if (municipios_destinatarios)
-      sql += `empreendimento_destinatario.municipio_id, `;
-    if (ccsemas) sql += `ccsema_id, `;
-    if (lotes) sql += `lote_id, `;
+    const columns = [
+      ...(anos ? ["year(data_emissao) as ano"] : []),
+      ...(especies ? ["especie_popular_cientifico_id"] : []),
+      ...(municipios_destinatarios ? ["empreendimento.municipio_id"] : []),
+      ...(ccsemas ? ["ccsema_id"] : []),
+      ...(lotes ? ["lote_id"] : []),
+      "sum(volume) as volumetotal",
+      "sum(valor_total) as valortotal"
+    ];
 
-    sql += ` sum(volume) as volumetotal, sum(valor_total) as valortotal FROM gf1 `;
+    let sql = select(columns) + from("gf1");
 
     if (municipios_destinatarios || ccsemas) {
-      sql += `INNER JOIN empreendimento ON (destinatario_id = empreendimento.id AND (`;
-      if (ccsemas)
-        ccsemas.forEach((ccsema, index) => {
-          sql += ` ccsema = ${ccsema}`;
-          if (index < ccsemas.length - 1) sql += ` OR`;
-        });
+      sql += ` JOIN empreendimento ON (gf1.destinatario_id = empreendimento.id)`;
+      const joinConditions = [];
+      if (ccsemas) joinConditions.push(...ccsemas.map((ccsema) => ({ "empreendimento.ccsema": ccsema })));
       if (municipios_destinatarios)
-        municipios_destinatarios.forEach((municipio, index) => {
-          sql += ` municipio_id = ${municipio}`;
-          if (index < municipios_destinatarios.length - 1) sql += ` OR`;
-        });
-      sql += `)) `;
+        joinConditions.push(
+          ...municipios_destinatarios.map((municipio) => ({ "empreendimento.municipio_id": municipio }))
+        );
+      sql += where(joinConditions);
     }
 
-    sql += `WHERE 1`;
+    const conditions = [];
+    if (anos) conditions.push({ "year(data_emissao)": anos });
+    if (especies) conditions.push({ "especie_popular_cientifico_id": especies });
+    if (lotes) conditions.push({ "lote_id": lotes });
 
-    if (lotes) {
-      sql += ` AND (`;
-      lotes.forEach((lote, index) => {
-        sql += ` lote_id = ${lote}`;
-        if (index < lotes.length - 1) sql += ` OR`;
-      });
-      sql += `)`;
-    }
-
-    if (anos) {
-      sql += ` AND (`;
-      anos.forEach((ano, index) => {
-        sql += ` year(data_emissao) = ${ano}`;
-        if (index < anos.length - 1) sql += ` OR`;
-      });
-      sql += `)`;
-    }
-
-    if (especies) {
-      sql += ` AND (`;
-      especies.forEach((especie, index) => {
-        sql += ` especie_popular_cientifico_id = ${especie}`;
-        if (index < especies.length - 1) sql += ` OR`;
-      });
-      sql += `)`;
-    }
+    if (conditions.length) sql += where(conditions);
 
     if (anos || especies || municipios_destinatarios || ccsemas || lotes) {
-      sql += ` GROUP BY `;
-      if (anos) sql += `year(emissao), `;
-      if (especies) sql += `especie_popular_cientifico_id, `;
-      if (municipios_destinatarios)
-        sql += `empreendimento_destinatario.municipio_id, `;
-      if (ccsemas) sql += `ccsema, `;
-      sql = sql.slice(0, -2);
-      if (lotes) sql += `, lote_id`;
+      const groupByColumns = [
+        ...(anos ? ["year(data_emissao)"] : []),
+        ...(especies ? ["especie_popular_cientifico_id"] : []),
+        ...(municipios_destinatarios ? ["empreendimento.municipio_id"] : []),
+        ...(ccsemas ? ["ccsema_id"] : []),
+        ...(lotes ? ["lote_id"] : [])
+      ];
+      sql += group(groupByColumns);
     }
-    sql += `;`;
-    const [rows] = await db.query(sql);
-    res.json(rows[0]);
+
+    const data = await execute(sql);
+    res.json(data);
   } catch (error) {
-    console.error("Erro na consulta básica:", error);
-    res.status(500).json({ message: "Erro no servidor" });
+    console.error("Error fetching advanced data:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
