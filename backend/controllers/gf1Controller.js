@@ -2,6 +2,7 @@ import db from "../config/db.js";
 
 // Controlador para consulta básica - totais por ano e especies
 export const getBasicData = async (req, res) => {
+  
   const { anos, especies } = req.query;
   try {
     let sql = `SELECT `;

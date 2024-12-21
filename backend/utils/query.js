@@ -1,3 +1,5 @@
+import db from '../config/db.js'; // Configuração do banco de dados
+
 /* *** Aux functions *** */
 const checkParam = (param) =>
     (typeof param === "string" && param.trim() !== "") ||
@@ -65,3 +67,14 @@ export const limit = (limit) =>
         : typeof limit === "number"
             ? `LIMIT ${limit}`
             : null;
+
+
+export const execute = async (sql) => {
+    try {
+        const [rows] = await db.query(sql);
+        return rows;
+    } catch (error) {
+        console.error("Error executing query:", error);
+        throw error; // Re-throw the error to handle it upstream if needed
+    }
+};
