@@ -32,41 +32,48 @@ export const getBasicData = async (req, res) => {
       groupByFields.push('ano');
     }
 
-    // Adicionar espécie popular ao SELECT e GROUP BY se 'especiesPopulares' estiver presente
+    // Condicionar JOINs de acordo com os filtros recebidos
+    let joins = `
+      FROM gf3 gf
+      INNER JOIN unidade_medida um ON um.id = gf.unidade_medida_id
+      INNER JOIN produto pr ON pr.id = gf.produto_id
+    `;
+
+    // Adicionar JOIN de especie_popular_cientifico se 'especiesPopulares' ou 'especiesCientificas' estiver presente
+    if (
+      especiesPopularesArray.length > 0 ||
+      especiesCientificasArray.length > 0
+    ) {
+      joins += `
+        INNER JOIN especie_popular_cientifico epc ON epc.id = gf.especie_popular_cientifico_id
+      `;
+    }
+
+    // Adicionar JOIN de especie_popular se 'especiesPopulares' estiver presente
     if (especiesPopularesArray.length > 0) {
+      joins += `INNER JOIN especie_popular ep ON ep.id = epc.especie_popular_id`;
       query += `, ep.nome AS nomeEspeciePopular`;
       groupByFields.push('nomeEspeciePopular');
     }
 
-    // Adicionar espécie científica ao SELECT e GROUP BY se 'especiesCientificas' estiver presente
+    // Adicionar JOIN de especie_cientifico se 'especiesCientificas' estiver presente
     if (especiesCientificasArray.length > 0) {
+      joins += `INNER JOIN especie_cientifico ec ON ec.id = epc.especie_cientifico_id`;
       query += `, ec.nome AS nomeEspecieCientifico`;
       groupByFields.push('nomeEspecieCientifico');
     }
 
-    // Adicionar produto ao SELECT e GROUP BY se 'produtos' estiver presente
+    // Adicionar JOIN de produto se 'produtos' estiver presente
     if (produtosArray.length > 0) {
       query += `, pr.nome AS nomeProduto`;
       groupByFields.push('nomeProduto');
     }
 
-    // Adicionar as tabelas de join necessárias
-    query += `
-      FROM 
-        gf3 gf
-      INNER JOIN 
-        especie_popular_cientifico epc ON epc.id = gf.especie_popular_cientifico_id
-      INNER JOIN 
-        especie_popular ep ON ep.id = epc.especie_popular_id
-      INNER JOIN 
-        especie_cientifico ec ON ec.id = epc.especie_cientifico_id
-      INNER JOIN 
-        unidade_medida um ON um.id = gf.unidade_medida_id
-      INNER JOIN 
-        produto pr ON pr.id = gf.produto_id
-      WHERE 
-        pr.residuo = 0 -- Filtrar por produtos NÃO Residuais
-    `;
+    // Adicionar os JOINs ao início da query
+    query += joins;
+
+    // Adicionar o filtro WHERE após os JOINs
+    query += ` WHERE pr.residuo = 0 -- Filtrar por produtos NÃO Residuais`;
 
     // Adicionar filtros condicionais
     if (anosArray.length > 0) {
@@ -156,14 +163,34 @@ export const getIntermediateData = async (req, res) => {
       groupByFields.push('ano');
     }
 
-    // Adicionar espécie popular ao SELECT e GROUP BY se 'especiesPopulares' estiver presente
+    let joins = `
+      FROM gf3 gf
+      INNER JOIN unidade_medida um ON um.id = gf.unidade_medida_id
+      INNER JOIN produto pr ON pr.id = gf.produto_id
+    `;
+
+    // Adicionar JOIN de especie_popular_cientifico se 'especiesPopulares' ou 'especiesCientificas' estiver presente
+    if (
+      especiesPopularesArray.length > 0 ||
+      especiesCientificasArray.length > 0
+    ) {
+      joins += `
+        INNER JOIN especie_popular_cientifico epc ON epc.id = gf.especie_popular_cientifico_id
+      `;
+    }
+
+    // Adicionar JOIN de especie_popular se 'especiesPopulares' estiver presente
     if (especiesPopularesArray.length > 0) {
+      joins += `INNER JOIN especie_popular ep ON ep.id = epc.especie_popular_id`;
+
       query += `, ep.nome AS nomeEspeciePopular`;
       groupByFields.push('nomeEspeciePopular');
     }
 
-    // Adicionar espécie científica ao SELECT e GROUP BY se 'especiesCientificas' estiver presente
+    // Adicionar JOIN de especie_cientifico se 'especiesCientificas' estiver presente
     if (especiesCientificasArray.length > 0) {
+      joins += `INNER JOIN especie_cientifico ec ON ec.id = epc.especie_cientifico_id`;
+
       query += `, ec.nome AS nomeEspecieCientifico`;
       groupByFields.push('nomeEspecieCientifico');
     }
@@ -179,6 +206,17 @@ export const getIntermediateData = async (req, res) => {
       municipiosRemetenteArray.length > 0 ||
       municipiosDestinatarioArray.length > 0
     ) {
+      joins += `
+        INNER JOIN 
+          empreendimento e_remetente ON e_remetente.id = gf.remetente_id
+        INNER JOIN 
+          municipio m_remetente ON m_remetente.id = e_remetente.municipio_id
+        INNER JOIN 
+          empreendimento e_destinatario ON e_destinatario.id = gf.destinatario_id
+        INNER JOIN 
+          municipio m_destinatario ON m_destinatario.id = e_destinatario.municipio_id
+      `;
+
       query += `, m_remetente.nome AS nomeMunicipioRemetente`;
       groupByFields.push('nomeMunicipioRemetente');
 
@@ -186,31 +224,11 @@ export const getIntermediateData = async (req, res) => {
       groupByFields.push('nomeMunicipioDestinatario');
     }
 
-    // Adicionar as tabelas de join necessárias
-    query += `
-      FROM 
-        gf3 gf
-      INNER JOIN 
-        especie_popular_cientifico epc ON epc.id = gf.especie_popular_cientifico_id
-      INNER JOIN 
-        especie_popular ep ON ep.id = epc.especie_popular_id
-      INNER JOIN 
-        especie_cientifico ec ON ec.id = epc.especie_cientifico_id
-      INNER JOIN 
-        unidade_medida um ON um.id = gf.unidade_medida_id
-      INNER JOIN 
-        produto pr ON pr.id = gf.produto_id
-      INNER JOIN 
-        empreendimento e_remetente ON e_remetente.id = gf.remetente_id
-      INNER JOIN 
-        municipio m_remetente ON m_remetente.id = e_remetente.municipio_id
-      INNER JOIN 
-        empreendimento e_destinatario ON e_destinatario.id = gf.destinatario_id
-      INNER JOIN 
-        municipio m_destinatario ON m_destinatario.id = e_destinatario.municipio_id
-      WHERE 
-        pr.residuo = 0 -- Filtrar por produtos NÃO Residuais
-    `;
+    // Adicionar os JOINs ao início da query
+    query += joins;
+
+    // Adicionar o filtro WHERE após os JOINs
+    query += ` WHERE pr.residuo = 0 -- Filtrar por produtos NÃO Residuais`;
 
     // Adicionar filtros condicionais
     if (anosArray.length > 0) {
@@ -316,14 +334,34 @@ export const getAdvancedData = async (req, res) => {
       groupByFields.push('ano');
     }
 
-    // Adicionar espécie popular ao SELECT e GROUP BY se 'especiesPopulares' estiver presente
+    let joins = `
+      FROM gf3 gf
+      INNER JOIN unidade_medida um ON um.id = gf.unidade_medida_id
+      INNER JOIN produto pr ON pr.id = gf.produto_id
+    `;
+
+    // Adicionar JOIN de especie_popular_cientifico se 'especiesPopulares' ou 'especiesCientificas' estiver presente
+    if (
+      especiesPopularesArray.length > 0 ||
+      especiesCientificasArray.length > 0
+    ) {
+      joins += `
+        INNER JOIN especie_popular_cientifico epc ON epc.id = gf.especie_popular_cientifico_id
+      `;
+    }
+
+    // Adicionar JOIN de especie_popular se 'especiesPopulares' estiver presente
     if (especiesPopularesArray.length > 0) {
+      joins += `INNER JOIN especie_popular ep ON ep.id = epc.especie_popular_id`;
+
       query += `, ep.nome AS nomeEspeciePopular`;
       groupByFields.push('nomeEspeciePopular');
     }
 
-    // Adicionar espécie científica ao SELECT e GROUP BY se 'especiesCientificas' estiver presente
+    // Adicionar JOIN de especie_cientifico se 'especiesCientificas' estiver presente
     if (especiesCientificasArray.length > 0) {
+      joins += `INNER JOIN especie_cientifico ec ON ec.id = epc.especie_cientifico_id`;
+
       query += `, ec.nome AS nomeEspecieCientifico`;
       groupByFields.push('nomeEspecieCientifico');
     }
@@ -339,6 +377,17 @@ export const getAdvancedData = async (req, res) => {
       municipiosRemetenteArray.length > 0 ||
       municipiosDestinatarioArray.length > 0
     ) {
+      joins += `
+        INNER JOIN 
+          empreendimento e_remetente ON e_remetente.id = gf.remetente_id
+        INNER JOIN 
+          municipio m_remetente ON m_remetente.id = e_remetente.municipio_id
+        INNER JOIN 
+          empreendimento e_destinatario ON e_destinatario.id = gf.destinatario_id
+        INNER JOIN 
+          municipio m_destinatario ON m_destinatario.id = e_destinatario.municipio_id
+      `;
+
       query += `, m_remetente.nome AS nomeMunicipioRemetente`;
       groupByFields.push('nomeMunicipioRemetente');
 
@@ -352,31 +401,11 @@ export const getAdvancedData = async (req, res) => {
       groupByFields.push('ccsemaRemetente');
     }
 
-    // Adicionar as tabelas de join necessárias
-    query += `
-      FROM 
-        gf3 gf
-      INNER JOIN 
-        especie_popular_cientifico epc ON epc.id = gf.especie_popular_cientifico_id
-      INNER JOIN 
-        especie_popular ep ON ep.id = epc.especie_popular_id
-      INNER JOIN 
-        especie_cientifico ec ON ec.id = epc.especie_cientifico_id
-      INNER JOIN 
-        unidade_medida um ON um.id = gf.unidade_medida_id
-      INNER JOIN 
-        produto pr ON pr.id = gf.produto_id
-      INNER JOIN 
-        empreendimento e_remetente ON e_remetente.id = gf.remetente_id
-      INNER JOIN 
-        municipio m_remetente ON m_remetente.id = e_remetente.municipio_id
-      INNER JOIN 
-        empreendimento e_destinatario ON e_destinatario.id = gf.destinatario_id
-      INNER JOIN 
-        municipio m_destinatario ON m_destinatario.id = e_destinatario.municipio_id
-      WHERE 
-        pr.residuo = 0 -- Filtrar por produtos NÃO Residuais
-    `;
+    // Adicionar os JOINs ao início da query
+    query += joins;
+
+    // Adicionar o filtro WHERE após os JOINs
+    query += ` WHERE pr.residuo = 0 -- Filtrar por produtos NÃO Residuais`;
 
     // Adicionar filtros condicionais
     if (anosArray.length > 0) {
