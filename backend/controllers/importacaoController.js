@@ -90,7 +90,7 @@ const generateQuery = (params) => {
 };
 
 // Controlador para consulta dinâmica
-export const getDynamicImportData = async (req, res) => {
+export const getBasicData = async (req, res) => {
   try {
     // Parâmetros de consulta fornecidos pelo cliente
     const { year, productId, countryId } = req.query;

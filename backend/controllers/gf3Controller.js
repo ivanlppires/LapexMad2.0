@@ -7,7 +7,6 @@ export const getBasicData = async (req, res) => {
   try {
     let query = `
       SELECT 
-        'GF3' as gfTipo,
         SUM(volume) AS volumeTotal, 
         um.nome AS unidadeMedidaVolume, 
         SUM(valor_total) AS valorTotalEmReais
