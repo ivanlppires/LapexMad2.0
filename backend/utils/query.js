@@ -1,4 +1,6 @@
-import db from '../config/db.js'; // Configuração do banco de dados
+import createConnection from '../config/db.js';
+
+const connection = await createConnection();
 
 /* *** Aux functions *** */
 const checkParam = (param) =>
@@ -71,7 +73,8 @@ export const limit = (limit) =>
 
 export const execute = async (sql) => {
     try {
-        const [rows] = await db.query(sql);
+        const [rows] = await connection.execute(sql);
+        console.log(sql, rows);
         return rows;
     } catch (error) {
         console.error("Error executing query:", error);

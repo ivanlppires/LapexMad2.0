@@ -1,7 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import routes from './routes';
-import requestLogger from './middlewares/requestLogger.js';
+import { requestLogger } from './middlewares/requestLogger.js';
 import { verifyFirebaseToken } from './middlewares/authMiddleware.js';
 
 dotenv.config();

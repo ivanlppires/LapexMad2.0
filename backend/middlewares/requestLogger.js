@@ -1,9 +1,9 @@
 // log.js
 import geoip from 'geoip-lite';
 
-import { connection } from '../config/db.js';
+import { execute } from "../utils/query.js";
 
-export function requestLogger(req, res, next) {
+export const requestLogger = (req, res, next) => {
 
     const user = req.headers['user'] || 'Unknown User';
     const resource = req.originalUrl;
@@ -17,7 +17,7 @@ export function requestLogger(req, res, next) {
     `;
     const values = [user, resource, date, ip, JSON.stringify(geo)];
 
-    connection.query(sql, values, (error, results) => {
+    execute(sql, values, (error, results) => {
         if (error) {
             console.error('Error inserting log into database:', error);
         } else {

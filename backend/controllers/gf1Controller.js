@@ -21,7 +21,7 @@ export const getBasicData = async (req, res) => {
       if (especies) conditions.push({ "especie_popular_cientifico_id": especies });
 
       sql += where(conditions);
-      sql += group(["year(data_emissao)", "especie_popular_cientifico_id"]);
+      sql += group(["year(data_emissao)", "especie_popula r_cientifico_id"]);
     }
 
     const data = await execute(sql);
