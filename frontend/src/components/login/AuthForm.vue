@@ -47,8 +47,8 @@ import {useAppStore} from "@/store/app";
 
 const visible = ref(false);
 const store = useAppStore();
-const email = ref("andre@mail.com");
-const password = ref("andre1@#$");
+const email = ref("");
+const password = ref("");
 </script>
 
 <style scoped>

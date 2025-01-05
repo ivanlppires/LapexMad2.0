@@ -4,26 +4,16 @@ import geoip from 'geoip-lite';
 import { execute } from "../utils/query.js";
 
 export const requestLogger = (req, res, next) => {
-
-    const user = req.headers['user'] || 'Unknown User';
+    const user = req.user.uid || '0';
     const resource = req.originalUrl;
-    const date = new Date().toISOString();
-    const ip = req.ip;
-    const geo = geoip.lookup(ip) || {};
-
+    const params = JSON.stringify({ params: req.params, body: req.body });
+    const ip = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'];
+    const geo = JSON.stringify(geoip.lookup(ip) || {});
+    const headers = JSON.stringify(req.headers);
     const sql = `
-        INSERT INTO log (usuario, recurso, data, ip, geo_info)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO log (usuario, recurso, parametros, ip, geo_info, headers)
+        VALUES ('${user}', '${resource}', '${params}', '${ip}', '${geo}', '${headers}');
     `;
-    const values = [user, resource, date, ip, JSON.stringify(geo)];
-
-    execute(sql, values, (error, results) => {
-        if (error) {
-            console.error('Error inserting log into database:', error);
-        } else {
-            console.log('Log entry added to database');
-        }
-    });
-
+    execute(sql);
     next();
 }

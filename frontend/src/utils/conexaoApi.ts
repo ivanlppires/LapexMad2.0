@@ -1,9 +1,9 @@
 import {useAppStore} from "@/store/app";
 
-const protocolo: string = location.protocol;
-const porta: number = 3000;
+//const protocolo: string = location.protocol;
+//const porta: number = 3000;
 // const url: string = `${protocolo}//${"123"}:${porta}/api`;
-const url: string = "http://209.126.77.36:3001/";
+const url: string = "http://localhost:5000/";
 
 const defaultHeaders: { [key: string]: any } = {
   'Content-Type': 'application/json',

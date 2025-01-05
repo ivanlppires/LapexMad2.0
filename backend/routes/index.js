@@ -10,8 +10,11 @@ import manejoRoutes from './manejoRoutes.js';
 import residuosRoutes from './residuosRoutes.js';
 import tributacaoRoutes from './tributacaoRoutes.js';
 import usuariosRoutes from './usuarioRoutes.js';
+import { requestLogger } from '../middlewares/requestLogger.js';
 
 const router = express.Router();
+
+router.use(requestLogger);
 
 router.use('/exportacaoBR', exportacaoBRRoutes);
 router.use('/exportacaoMT', exportacaoMTRoutes);

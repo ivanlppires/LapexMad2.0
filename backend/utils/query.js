@@ -74,7 +74,6 @@ export const limit = (limit) =>
 export const execute = async (sql) => {
     try {
         const [rows] = await connection.execute(sql);
-        console.log(sql, rows);
         return rows;
     } catch (error) {
         console.error("Error executing query:", error);
