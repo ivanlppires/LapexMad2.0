@@ -4,6 +4,10 @@ import { select, from, where, group, limit, order, execute } from "../utils/quer
 
 export const getBasicData = async (req, res) => {
   try {
+    
+    if (!req.query.anos && !req.query.especies) 
+      return res.status(400).json({ error: "Missing query parameters" });
+    
     const { anos, especies } = req.query;
 
     const columns = [
@@ -13,7 +17,7 @@ export const getBasicData = async (req, res) => {
       "sum(valor_total) as valortotal"
     ];
 
-    let sql = select(columns) + from("gf1");
+    let sql = select(columns) + from(["gf1"]);
 
     if (anos || especies) {
       const conditions = [];
@@ -21,7 +25,7 @@ export const getBasicData = async (req, res) => {
       if (especies) conditions.push({ "especie_popular_cientifico_id": especies });
 
       sql += where(conditions);
-      sql += group(["year(data_emissao)", "especie_popula r_cientifico_id"]);
+      sql += group(["year(data_emissao)", "especie_popular_cientifico_id"]);
     }
 
     const data = await execute(sql);
@@ -123,7 +127,8 @@ export const getAdvancedData = async (req, res) => {
       ];
       sql += group(groupByColumns);
     }
-
+    console.log('DEBUG', sql);
+    
     const data = await execute(sql);
     res.json(data);
   } catch (error) {

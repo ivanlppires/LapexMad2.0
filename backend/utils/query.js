@@ -7,17 +7,25 @@ const checkParam = (param) =>
     (typeof param === "string" && param.trim() !== "") ||
     (Array.isArray(param) && param.length > 0);
 
-const formatComma = (arr) => arr.join(",");
-const formatSpace = (arr) => (checkParam(arr) ? arr.join(" ") : false);
+const formatComma = (arr) => arr.join(", ");
+const formatSpace = (arr) => arr.join(" ");
 
-/* *** Generating SQL functions **** */
-export const select = (columns) => (checkParam(columns) ? `SELECT ${formatComma(columns)}` : null);
+/* *** Generating SQL functions *** */
+export const select = (columns) => {
+    if (!checkParam(columns)) return "";
+    const formattedColumns = Array.isArray(columns) ? columns : [columns];
+    return `SELECT ${formatComma(formattedColumns)}`;
+};
 
-export const from = (sources) => (checkParam(sources) ? `FROM ${formatSpace(sources)}` : null);
+export const from = (sources) => {
+    if (!checkParam(sources)) return "";
+    const formattedSources = Array.isArray(sources) ? sources : [sources];
+    return ` FROM ${formatSpace(formattedSources)}`;
+};
 
 export const where = (selections) =>
     checkParam(selections)
-        ? `WHERE ${selections
+        ? ` WHERE ${selections
             .map((condition) =>
                 Object.entries(condition || {})
                     .map(([key, value]) =>
@@ -31,11 +39,11 @@ export const where = (selections) =>
             .join(" AND ")}`
         : null;
 
-export const group = (columns) => (checkParam(columns) ? `GROUP BY ${formatComma(columns)}` : null);
+export const group = (columns) => (checkParam(columns) ? ` GROUP BY ${formatComma(columns)}` : null);
 
 export const having = (conditions) =>
     checkParam(conditions)
-        ? `HAVING ${conditions
+        ? ` HAVING ${conditions
             .map((cond) =>
                 Object.entries(cond || {})
                     .map(([key, value]) =>
@@ -51,7 +59,7 @@ export const having = (conditions) =>
 
 export const order = (order) =>
     checkParam(order)
-        ? `ORDER BY ${order
+        ? ` ORDER BY ${order
             .map((o) =>
                 Object.entries(o || {})
                     .map(([col, dir]) =>
@@ -65,7 +73,7 @@ export const order = (order) =>
 
 export const limit = (limit) =>
     Array.isArray(limit) && limit.length === 2
-        ? `LIMIT ${limit[0]}, ${limit[1]}`
+        ? ` LIMIT ${limit[0]}, ${limit[1]}`
         : typeof limit === "number"
             ? `LIMIT ${limit}`
             : null;

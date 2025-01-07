@@ -10,14 +10,14 @@ const router = express.Router();
 
 // Rotas com níveis de permissão
 // Basic: viewer, intermediate, advanced, admin
-router.get('/basic', checkPermission(['viewer', 'intermediate', 'advanced', 'admin']), getBasicData);
+router.get('/basic', checkPermission(['viewer', process.env.INTERMEDIATE, process.env.ADVANCED, process.env.ADMIN]), getBasicData);
 
 /*
 // Intermediate: intermediate, advanced, admin
-router.get('/intermediate', checkPermission(['intermediate', 'advanced', 'admin']), getIntermediateData);
+router.get('/intermediate', checkPermission([process.env.INTERMEDIATE, process.env.ADVANCED, process.env.ADMIN]), getIntermediateData);
 
 // Advanced: advanced, admin
-router.get('/advanced', checkPermission(['advanced', 'admin']), getAdvancedData);
+router.get('/advanced', checkPermission([process.env.ADVANCED, process.env.ADMIN]), getAdvancedData);
 */
 
 export default router;

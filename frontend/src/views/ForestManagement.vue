@@ -245,7 +245,12 @@ const getData = () => {
     });
 };
 const testePerfil = () => {
-  api.get('/gf1')
+  api.get('/gf1/basic', {
+    params: {
+      anos: [2023, 2024],
+      especies: [9105, 3340],
+    },
+  })
     .then((response: any) => {
       console.log(response);
     })

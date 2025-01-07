@@ -8,35 +8,26 @@ admin.initializeApp({
 });
 
 // Middleware para verificar token do Firebase
-export const verifyFirebaseToken = async (req, res, next) => {
-  try {
+export const verifyFirebaseToken = async (req, res, next) => { 
     const token = req.headers.authorization?.split(' ')[1]; // Extrai o token do cabeçalho
-    if (!token) {
+    if (!token) 
       return res.status(401).json({ message: 'Token não fornecido' });
-    }
     req.user = await admin.auth().verifyIdToken(token);// Salva os dados do usuário na requisição
     const sql = `SELECT u.*, p.nome as perfil, p.id as perfil_id FROM usuario u INNER JOIN perfil p ON (u.perfil=p.id) WHERE u.uid = '${req.user.uid}'`;
-    execute(sql).then((result) => {
-      req.user = { ...req.user, ...result[0] };  
-      next();
-    }).catch((error) => console.error('Erro ao verificar token:', error));
+    const result = await execute(sql);
+    if(!result[0]) 
+      return res.status(401).json({ message: 'Usuário não encontrado' });
+    req.user = {...req.user, ...result[0]};
     next();
-  } catch (error) {
-    console.error('Erro ao verificar token do Firebase:', error);
-    res.status(401).json({ message: 'Token inválido' });
-  }
-};
+}
 
 // Mantém as exportações existentes
-export const checkPermission = (requiredRoles) => {
+export const checkPermission = (level) => {
   return async (req, res, next) => {
     try {
-
-      const userRole = req.user.perfil;
-      const hasPermission = requiredRoles.some((role) => userRole.includes(role));
+      const hasPermission = req.user.perfil_id >= level;
       if (hasPermission) 
         return next();
-      
       return res.status(403).json({ message: 'Acesso negado: Permissão insuficiente' });
     } catch (error) {
       console.error('Erro ao verificar token:', error);
